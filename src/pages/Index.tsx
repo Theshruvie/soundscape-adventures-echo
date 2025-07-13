@@ -6,7 +6,7 @@ import { AudioManager } from '../components/AudioManager';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Volume2, Mic, MicOff, Play, Pause, RotateCcw } from 'lucide-react';
+import { Volume2, Mic, MicOff, Play, Pause, RotateCcw, Info } from 'lucide-react';
 
 const Index = () => {
   const [gameState, setGameState] = useState({
@@ -105,9 +105,54 @@ const Index = () => {
         <h1 className="text-6xl font-bold mb-4 text-cyan-400 tracking-wider">
           ECHOVERSE
         </h1>
-        <p className="text-xl text-gray-300 mb-4">
+        <p className="text-xl text-gray-300 mb-6">
           AI-Powered Voice-Controlled Audio Adventure
         </p>
+        
+        {/* Game Description */}
+        <Card className="bg-gray-800 border-gray-700 p-6 mb-6 max-w-4xl mx-auto">
+          <div className="flex items-start gap-3 mb-4">
+            <Info className="text-cyan-400 mt-1 flex-shrink-0" size={20} />
+            <h2 className="text-2xl font-bold text-cyan-400 text-left">About EchoVerse</h2>
+          </div>
+          
+          <div className="text-left space-y-4 text-gray-300">
+            <p className="text-lg leading-relaxed">
+              <strong className="text-white">EchoVerse</strong> is an immersive audio adventure game designed specifically for accessibility. 
+              Navigate mysterious worlds using only your voice and spatial audio cues.
+            </p>
+            
+            <div className="grid md:grid-cols-2 gap-6 mt-6">
+              <div>
+                <h3 className="text-lg font-bold text-yellow-400 mb-3">🎮 Game Modes</h3>
+                <ul className="space-y-2 text-sm">
+                  <li><strong className="text-cyan-300">Practice Mode:</strong> Learn controls in a safe environment</li>
+                  <li><strong className="text-cyan-300">Adventure Mode:</strong> Explore challenging environments with objectives</li>
+                </ul>
+              </div>
+              
+              <div>
+                <h3 className="text-lg font-bold text-yellow-400 mb-3">🔊 Key Features</h3>
+                <ul className="space-y-2 text-sm">
+                  <li>• Voice-controlled navigation and interactions</li>
+                  <li>• Spatial 3D audio for environmental awareness</li>
+                  <li>• AI-powered narration and feedback</li>
+                  <li>• Fully accessible interface design</li>
+                </ul>
+              </div>
+            </div>
+            
+            <div className="bg-gray-900 p-4 rounded-lg mt-6">
+              <h3 className="text-lg font-bold text-yellow-400 mb-2">🎯 How to Play</h3>
+              <p className="text-sm">
+                Use voice commands like "go left", "go forward", or "look around" to navigate. 
+                Listen carefully to audio cues to find objectives and avoid hazards. 
+                Your spatial awareness and quick decision-making will be key to success!
+              </p>
+            </div>
+          </div>
+        </Card>
+        
         <div className="flex justify-center gap-4 mb-6">
           <Badge variant="outline" className="text-lg p-2 border-cyan-400 text-cyan-400">
             Mode: {gameState.mode.toUpperCase()}
