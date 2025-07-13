@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { GameEngine } from '../components/GameEngine';
 import { VoiceController } from '../components/VoiceController';
@@ -6,7 +5,7 @@ import { AudioManager } from '../components/AudioManager';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Volume2, Mic, MicOff, Play, Pause, RotateCcw, Info } from 'lucide-react';
+import { Volume2, Mic, MicOff, Play, Pause, RotateCcw, Info, User, Target, AlertTriangle } from 'lucide-react';
 
 const Index = () => {
   const [gameState, setGameState] = useState({
@@ -17,6 +16,13 @@ const Index = () => {
     currentLevel: 1,
     isListening: false,
     gameStarted: false
+  });
+
+  const [visualState, setVisualState] = useState({
+    playerPosition: { x: 0, z: 0 },
+    environment: null,
+    objectives: [],
+    hazards: []
   });
 
   const [logs, setLogs] = useState<string[]>([]);
@@ -38,7 +44,8 @@ const Index = () => {
       audioManager: audioManagerRef.current,
       voiceController: voiceControllerRef.current,
       onStateChange: handleGameStateChange,
-      onLog: addLog
+      onLog: addLog,
+      onVisualUpdate: handleVisualUpdate
     });
 
     // Welcome message
@@ -61,6 +68,10 @@ const Index = () => {
 
   const handleGameStateChange = (newState: any) => {
     setGameState(prev => ({ ...prev, ...newState }));
+  };
+
+  const handleVisualUpdate = (visualData: any) => {
+    setVisualState(visualData);
   };
 
   const addLog = (message: string) => {
@@ -88,6 +99,12 @@ const Index = () => {
       lives: 3, 
       currentLevel: 1 
     }));
+    setVisualState({
+      playerPosition: { x: 0, z: 0 },
+      environment: null,
+      objectives: [],
+      hazards: []
+    });
   };
 
   const toggleListening = () => {
@@ -96,6 +113,85 @@ const Index = () => {
     } else {
       voiceControllerRef.current?.startListening();
     }
+  };
+
+  const renderGameMap = () => {
+    const mapSize = 200; // Visual map size in pixels
+    const gridSize = visualState.environment?.size || { x: 10, z: 10 };
+    const scale = mapSize / Math.max(gridSize.x, gridSize.z);
+    
+    const getVisualPosition = (gamePos: { x: number, z: number }) => ({
+      x: (gamePos.x + gridSize.x / 2) * scale,
+      y: (gamePos.z + gridSize.z / 2) * scale
+    });
+
+    return (
+      <div className="relative bg-gray-900 rounded-lg border-2 border-gray-700" 
+           style={{ width: mapSize + 40, height: mapSize + 40 }}>
+        {/* Grid background */}
+        <div className="absolute inset-2 bg-gray-800 rounded" 
+             style={{ 
+               backgroundImage: `
+                 linear-gradient(rgba(75, 85, 99, 0.3) 1px, transparent 1px),
+                 linear-gradient(90deg, rgba(75, 85, 99, 0.3) 1px, transparent 1px)
+               `,
+               backgroundSize: `${scale}px ${scale}px`
+             }}>
+          
+          {/* Player position */}
+          <div 
+            className="absolute w-4 h-4 bg-cyan-400 rounded-full border-2 border-white transform -translate-x-2 -translate-y-2 z-10"
+            style={{ 
+              left: getVisualPosition(visualState.playerPosition).x,
+              top: getVisualPosition(visualState.playerPosition).y
+            }}
+            title="Player Position"
+          >
+            <User size={12} className="absolute inset-0.5 text-gray-900" />
+          </div>
+
+          {/* Objectives */}
+          {visualState.objectives.map((objective: any, index: number) => {
+            const pos = getVisualPosition(objective.position);
+            return (
+              <div
+                key={index}
+                className="absolute w-3 h-3 bg-green-400 rounded-full border border-white transform -translate-x-1.5 -translate-y-1.5"
+                style={{ left: pos.x, top: pos.y }}
+                title={objective.description}
+              >
+                <Target size={8} className="absolute inset-0.5 text-gray-900" />
+              </div>
+            );
+          })}
+
+          {/* Hazards */}
+          {visualState.hazards?.map((hazard: any, index: number) => {
+            const pos = getVisualPosition(hazard.position);
+            return (
+              <div
+                key={index}
+                className="absolute w-3 h-3 bg-red-500 rounded-full border border-white transform -translate-x-1.5 -translate-y-1.5"
+                style={{ left: pos.x, top: pos.y }}
+                title={hazard.description}
+              >
+                <AlertTriangle size={8} className="absolute inset-0.5 text-white" />
+              </div>
+            );
+          })}
+
+          {/* Starting position marker */}
+          <div 
+            className="absolute w-2 h-2 bg-yellow-400 rounded-full transform -translate-x-1 -translate-y-1"
+            style={{ 
+              left: getVisualPosition({ x: 0, z: 0 }).x,
+              top: getVisualPosition({ x: 0, z: 0 }).y
+            }}
+            title="Starting Position"
+          />
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -170,7 +266,7 @@ const Index = () => {
       </div>
 
       {/* Main Control Panel */}
-      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Game Controls */}
         <Card className="bg-gray-800 border-gray-700 p-6">
           <h2 className="text-2xl font-bold mb-6 text-cyan-400">Game Controls</h2>
@@ -231,6 +327,55 @@ const Index = () => {
               <div>"repeat" - Repeat last message</div>
             </div>
           </div>
+        </Card>
+
+        {/* Visual Game Map */}
+        <Card className="bg-gray-800 border-gray-700 p-6">
+          <h2 className="text-2xl font-bold mb-6 text-cyan-400">Game Visualization</h2>
+          
+          {gameState.gameStarted && visualState.environment ? (
+            <div className="space-y-4">
+              <div className="text-center">
+                <h3 className="text-lg font-bold text-yellow-400 mb-2">
+                  {visualState.environment.name}
+                </h3>
+                <p className="text-sm text-gray-300 mb-4">
+                  Player position: ({Math.round(visualState.playerPosition.x)}, {Math.round(visualState.playerPosition.z)})
+                </p>
+              </div>
+              
+              <div className="flex justify-center">
+                {renderGameMap()}
+              </div>
+              
+              <div className="bg-gray-900 p-3 rounded-lg">
+                <h4 className="text-sm font-bold text-yellow-400 mb-2">Legend:</h4>
+                <div className="grid grid-cols-2 gap-2 text-xs text-gray-300">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-cyan-400 rounded-full"></div>
+                    <span>Player</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+                    <span>Objective</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                    <span>Hazard</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+                    <span>Start</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center text-gray-400 py-8">
+              <User size={48} className="mx-auto mb-4 opacity-50" />
+              <p>Start a game to see the visual map</p>
+            </div>
+          )}
         </Card>
 
         {/* Status & Logs */}

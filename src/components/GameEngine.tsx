@@ -1,4 +1,3 @@
-
 import * as THREE from 'three';
 import { AudioManager } from './AudioManager';
 import { VoiceController } from './VoiceController';
@@ -8,6 +7,7 @@ interface GameEngineOptions {
   voiceController: VoiceController;
   onStateChange: (state: any) => void;
   onLog: (message: string) => void;
+  onVisualUpdate?: (visualData: any) => void;
 }
 
 interface GameState {
@@ -28,6 +28,7 @@ export class GameEngine {
   private voiceController: VoiceController;
   private onStateChange: (state: any) => void;
   private onLog: (message: string) => void;
+  private onVisualUpdate?: (visualData: any) => void;
   private gameState: GameState;
   private environments: any[] = [];
   private currentObjective: any = null;
@@ -38,6 +39,7 @@ export class GameEngine {
     this.voiceController = options.voiceController;
     this.onStateChange = options.onStateChange;
     this.onLog = options.onLog;
+    this.onVisualUpdate = options.onVisualUpdate;
     
     this.gameState = {
       mode: 'practice',
@@ -117,6 +119,7 @@ export class GameEngine {
     }
     
     this.updateState();
+    this.updateVisualState();
     this.audioManager.startBackgroundMusic();
   }
 
@@ -158,6 +161,20 @@ export class GameEngine {
     
     // Set up spatial audio for objectives and hazards
     this.setupSpatialAudio();
+  }
+
+  private updateVisualState() {
+    if (this.onVisualUpdate) {
+      this.onVisualUpdate({
+        playerPosition: {
+          x: this.gameState.playerPosition.x,
+          z: this.gameState.playerPosition.z
+        },
+        environment: this.gameState.environment,
+        objectives: this.gameState.objectives,
+        hazards: this.gameState.environment?.hazards || []
+      });
+    }
   }
 
   private setupSpatialAudio() {
@@ -285,6 +302,7 @@ export class GameEngine {
     }
     
     this.updateState();
+    this.updateVisualState();
   }
 
   private getMovementFeedback(direction: string): string {
@@ -487,6 +505,7 @@ export class GameEngine {
     this.audioManager.speak("Game reset. Ready for a new adventure!");
     this.onLog("Game reset");
     this.updateState();
+    this.updateVisualState();
   }
 
   private updateState() {
