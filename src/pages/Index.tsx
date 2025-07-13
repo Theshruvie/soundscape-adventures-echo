@@ -220,7 +220,7 @@ const Index = () => {
           {/* Voice Commands Help */}
           <div className="bg-gray-900 p-4 rounded-lg">
             <h3 className="text-lg font-bold mb-3 text-yellow-400">Voice Commands:</h3>
-            <div className="grid grid-cols-2 gap-2 text-sm">
+            <div className="grid grid-cols-2 gap-2 text-sm text-white">
               <div>"start game" - Begin adventure</div>
               <div>"go left" - Move left</div>
               <div>"go right" - Move right</div>
