@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { GameEngine } from '../components/GameEngine';
 import { VoiceController } from '../components/VoiceController';
@@ -5,7 +6,7 @@ import { AudioManager } from '../components/AudioManager';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Volume2, Mic, MicOff, Play, Pause, RotateCcw, Info, User, Target, AlertTriangle } from 'lucide-react';
+import { Volume2, Mic, MicOff, Play, Pause, RotateCcw, Info, User, Target, AlertTriangle, Trees, Home, Mountain } from 'lucide-react';
 
 const Index = () => {
   const [gameState, setGameState] = useState({
@@ -116,7 +117,7 @@ const Index = () => {
   };
 
   const renderGameMap = () => {
-    const mapSize = 200; // Visual map size in pixels
+    const mapSize = 600; // Much larger visual map size
     const gridSize = visualState.environment?.size || { x: 10, z: 10 };
     const scale = mapSize / Math.max(gridSize.x, gridSize.z);
     
@@ -125,70 +126,257 @@ const Index = () => {
       y: (gamePos.z + gridSize.z / 2) * scale
     });
 
+    // Environment-specific styling and graphics
+    const getEnvironmentStyle = () => {
+      if (!visualState.environment) return 'bg-gray-800';
+      
+      switch (visualState.environment.soundscape) {
+        case 'forest':
+          return 'bg-gradient-to-br from-green-900 via-green-800 to-green-700';
+        case 'cave':
+          return 'bg-gradient-to-br from-gray-900 via-stone-800 to-stone-900';
+        default:
+          return 'bg-gradient-to-br from-blue-900 via-blue-800 to-blue-700';
+      }
+    };
+
+    const renderEnvironmentGraphics = () => {
+      if (!visualState.environment) return null;
+      
+      const graphics = [];
+      const environmentType = visualState.environment.soundscape;
+      
+      // Generate environmental elements based on type
+      if (environmentType === 'forest') {
+        // Add trees scattered around
+        for (let i = 0; i < 15; i++) {
+          const x = Math.random() * (mapSize - 40) + 20;
+          const y = Math.random() * (mapSize - 40) + 20;
+          graphics.push(
+            <div
+              key={`tree-${i}`}
+              className="absolute w-6 h-6 text-green-400 opacity-60"
+              style={{ left: x, top: y }}
+            >
+              <Trees size={24} />
+            </div>
+          );
+        }
+        
+        // Add some darker forest patches
+        for (let i = 0; i < 8; i++) {
+          const x = Math.random() * (mapSize - 80) + 40;
+          const y = Math.random() * (mapSize - 80) + 40;
+          const size = 30 + Math.random() * 40;
+          graphics.push(
+            <div
+              key={`patch-${i}`}
+              className="absolute bg-green-900/40 rounded-full"
+              style={{ 
+                left: x, 
+                top: y, 
+                width: size, 
+                height: size 
+              }}
+            />
+          );
+        }
+      } else if (environmentType === 'cave') {
+        // Add rock formations
+        for (let i = 0; i < 12; i++) {
+          const x = Math.random() * (mapSize - 30) + 15;
+          const y = Math.random() * (mapSize - 30) + 15;
+          const size = 20 + Math.random() * 30;
+          graphics.push(
+            <div
+              key={`rock-${i}`}
+              className="absolute bg-stone-600/50 rounded-lg border border-stone-500/30"
+              style={{ 
+                left: x, 
+                top: y, 
+                width: size, 
+                height: size 
+              }}
+            />
+          );
+        }
+        
+        // Add stalactites/stalagmites
+        for (let i = 0; i < 6; i++) {
+          const x = Math.random() * (mapSize - 20) + 10;
+          const y = Math.random() * (mapSize - 20) + 10;
+          graphics.push(
+            <div
+              key={`stalactite-${i}`}
+              className="absolute w-4 h-4 text-stone-400 opacity-70"
+              style={{ left: x, top: y }}
+            >
+              <Mountain size={16} />
+            </div>
+          );
+        }
+      } else {
+        // Practice room - add room elements
+        const roomPadding = 40;
+        // Room walls
+        graphics.push(
+          <div
+            key="room-outline"
+            className="absolute border-2 border-blue-400/50 rounded-lg"
+            style={{
+              left: roomPadding,
+              top: roomPadding,
+              width: mapSize - roomPadding * 2,
+              height: mapSize - roomPadding * 2
+            }}
+          />
+        );
+        
+        // Add furniture/room elements
+        const furniture = [
+          { icon: Home, x: roomPadding + 20, y: roomPadding + 20, color: 'text-blue-300' },
+          { icon: Home, x: mapSize - roomPadding - 40, y: roomPadding + 20, color: 'text-blue-300' },
+          { icon: Home, x: roomPadding + 20, y: mapSize - roomPadding - 40, color: 'text-blue-300' },
+          { icon: Home, x: mapSize - roomPadding - 40, y: mapSize - roomPadding - 40, color: 'text-blue-300' }
+        ];
+        
+        furniture.forEach((item, index) => {
+          graphics.push(
+            <div
+              key={`furniture-${index}`}
+              className={`absolute w-6 h-6 ${item.color} opacity-50`}
+              style={{ left: item.x, top: item.y }}
+            >
+              <item.icon size={24} />
+            </div>
+          );
+        });
+      }
+      
+      return graphics;
+    };
+
     return (
-      <div className="relative bg-gray-900 rounded-lg border-2 border-gray-700" 
+      <div className="relative rounded-lg border-2 border-gray-600 overflow-hidden shadow-2xl" 
            style={{ width: mapSize + 40, height: mapSize + 40 }}>
-        {/* Grid background */}
-        <div className="absolute inset-2 bg-gray-800 rounded" 
+        {/* Environment background */}
+        <div className={`absolute inset-2 rounded ${getEnvironmentStyle()}`} 
              style={{ 
                backgroundImage: `
-                 linear-gradient(rgba(75, 85, 99, 0.3) 1px, transparent 1px),
-                 linear-gradient(90deg, rgba(75, 85, 99, 0.3) 1px, transparent 1px)
+                 linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+                 linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px)
                `,
-               backgroundSize: `${scale}px ${scale}px`
+               backgroundSize: `${scale * 2}px ${scale * 2}px`
              }}>
           
-          {/* Player position */}
+          {/* Environment graphics */}
+          {renderEnvironmentGraphics()}
+          
+          {/* Player position with larger, more visible design */}
           <div 
-            className="absolute w-4 h-4 bg-cyan-400 rounded-full border-2 border-white transform -translate-x-2 -translate-y-2 z-10"
+            className="absolute w-8 h-8 bg-cyan-400 rounded-full border-3 border-white shadow-lg transform -translate-x-4 -translate-y-4 z-20 animate-pulse"
             style={{ 
               left: getVisualPosition(visualState.playerPosition).x,
               top: getVisualPosition(visualState.playerPosition).y
             }}
             title="Player Position"
           >
-            <User size={12} className="absolute inset-0.5 text-gray-900" />
+            <User size={20} className="absolute inset-1 text-gray-900" />
+            {/* Player direction indicator */}
+            <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-1 h-4 bg-cyan-300 rounded-full opacity-80"></div>
           </div>
 
-          {/* Objectives */}
+          {/* Player trail - show last few positions */}
+          <div 
+            className="absolute w-4 h-4 bg-cyan-300/60 rounded-full transform -translate-x-2 -translate-y-2 z-10"
+            style={{ 
+              left: getVisualPosition(visualState.playerPosition).x - 10,
+              top: getVisualPosition(visualState.playerPosition).y
+            }}
+          />
+          <div 
+            className="absolute w-3 h-3 bg-cyan-300/40 rounded-full transform -translate-x-1.5 -translate-y-1.5 z-10"
+            style={{ 
+              left: getVisualPosition(visualState.playerPosition).x - 20,
+              top: getVisualPosition(visualState.playerPosition).y
+            }}
+          />
+
+          {/* Objectives with enhanced visibility */}
           {visualState.objectives.map((objective: any, index: number) => {
             const pos = getVisualPosition(objective.position);
             return (
-              <div
-                key={index}
-                className="absolute w-3 h-3 bg-green-400 rounded-full border border-white transform -translate-x-1.5 -translate-y-1.5"
-                style={{ left: pos.x, top: pos.y }}
-                title={objective.description}
-              >
-                <Target size={8} className="absolute inset-0.5 text-gray-900" />
+              <div key={index} className="relative">
+                {/* Objective glow effect */}
+                <div
+                  className="absolute w-12 h-12 bg-green-400/20 rounded-full animate-pulse transform -translate-x-6 -translate-y-6"
+                  style={{ left: pos.x, top: pos.y }}
+                />
+                <div
+                  className="absolute w-6 h-6 bg-green-400 rounded-full border-2 border-white shadow-lg transform -translate-x-3 -translate-y-3 z-15"
+                  style={{ left: pos.x, top: pos.y }}
+                  title={objective.description}
+                >
+                  <Target size={16} className="absolute inset-1 text-gray-900" />
+                </div>
               </div>
             );
           })}
 
-          {/* Hazards */}
+          {/* Hazards with enhanced visibility */}
           {visualState.hazards?.map((hazard: any, index: number) => {
             const pos = getVisualPosition(hazard.position);
             return (
-              <div
-                key={index}
-                className="absolute w-3 h-3 bg-red-500 rounded-full border border-white transform -translate-x-1.5 -translate-y-1.5"
-                style={{ left: pos.x, top: pos.y }}
-                title={hazard.description}
-              >
-                <AlertTriangle size={8} className="absolute inset-0.5 text-white" />
+              <div key={index} className="relative">
+                {/* Hazard warning effect */}
+                <div
+                  className="absolute w-12 h-12 bg-red-500/20 rounded-full animate-pulse transform -translate-x-6 -translate-y-6"
+                  style={{ left: pos.x, top: pos.y }}
+                />
+                <div
+                  className="absolute w-6 h-6 bg-red-500 rounded-full border-2 border-white shadow-lg transform -translate-x-3 -translate-y-3 z-15"
+                  style={{ left: pos.x, top: pos.y }}
+                  title={hazard.description}
+                >
+                  <AlertTriangle size={16} className="absolute inset-1 text-white" />
+                </div>
               </div>
             );
           })}
 
           {/* Starting position marker */}
           <div 
-            className="absolute w-2 h-2 bg-yellow-400 rounded-full transform -translate-x-1 -translate-y-1"
+            className="absolute w-4 h-4 bg-yellow-400 rounded-full border-2 border-white shadow-md transform -translate-x-2 -translate-y-2 z-10"
             style={{ 
               left: getVisualPosition({ x: 0, z: 0 }).x,
               top: getVisualPosition({ x: 0, z: 0 }).y
             }}
             title="Starting Position"
-          />
+          >
+            <div className="absolute inset-1 bg-yellow-600 rounded-full"></div>
+          </div>
+
+          {/* Compass rose */}
+          <div className="absolute top-4 right-4 w-16 h-16 border-2 border-white/50 rounded-full bg-black/30 backdrop-blur-sm">
+            <div className="absolute inset-2 text-white text-xs flex flex-col justify-between items-center">
+              <div>N</div>
+              <div className="flex justify-between w-full">
+                <span>W</span>
+                <span>E</span>
+              </div>
+              <div>S</div>
+            </div>
+          </div>
+
+          {/* Environment name overlay */}
+          {visualState.environment && (
+            <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur-sm text-white px-3 py-2 rounded-lg border border-white/20">
+              <div className="text-sm font-bold">{visualState.environment.name}</div>
+              <div className="text-xs text-gray-300">
+                Size: {gridSize.x} × {gridSize.z} units
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -266,7 +454,7 @@ const Index = () => {
       </div>
 
       {/* Main Control Panel */}
-      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
         {/* Game Controls */}
         <Card className="bg-gray-800 border-gray-700 p-6">
           <h2 className="text-2xl font-bold mb-6 text-cyan-400">Game Controls</h2>
@@ -329,9 +517,9 @@ const Index = () => {
           </div>
         </Card>
 
-        {/* Visual Game Map */}
-        <Card className="bg-gray-800 border-gray-700 p-6">
-          <h2 className="text-2xl font-bold mb-6 text-cyan-400">Game Visualization</h2>
+        {/* Visual Game Map - Now spans two columns on xl screens */}
+        <Card className="bg-gray-800 border-gray-700 p-6 xl:col-span-2">
+          <h2 className="text-2xl font-bold mb-6 text-cyan-400">World Visualization</h2>
           
           {gameState.gameStarted && visualState.environment ? (
             <div className="space-y-4">
@@ -348,38 +536,39 @@ const Index = () => {
                 {renderGameMap()}
               </div>
               
-              <div className="bg-gray-900 p-3 rounded-lg">
-                <h4 className="text-sm font-bold text-yellow-400 mb-2">Legend:</h4>
-                <div className="grid grid-cols-2 gap-2 text-xs text-gray-300">
+              <div className="bg-gray-900 p-4 rounded-lg">
+                <h4 className="text-sm font-bold text-yellow-400 mb-3">Map Legend:</h4>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 text-xs text-gray-300">
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-cyan-400 rounded-full"></div>
+                    <div className="w-4 h-4 bg-cyan-400 rounded-full"></div>
                     <span>Player</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+                    <div className="w-4 h-4 bg-green-400 rounded-full"></div>
                     <span>Objective</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                    <div className="w-4 h-4 bg-red-500 rounded-full"></div>
                     <span>Hazard</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-                    <span>Start</span>
+                    <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
+                    <span>Start Point</span>
                   </div>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="text-center text-gray-400 py-8">
-              <User size={48} className="mx-auto mb-4 opacity-50" />
-              <p>Start a game to see the visual map</p>
+            <div className="text-center text-gray-400 py-12">
+              <User size={64} className="mx-auto mb-4 opacity-50" />
+              <p className="text-lg">Start a game to explore the world</p>
+              <p className="text-sm mt-2">The visualization will show your journey through different environments</p>
             </div>
           )}
         </Card>
 
-        {/* Status & Logs */}
-        <Card className="bg-gray-800 border-gray-700 p-6">
+        {/* Status & Logs - Back to single column */}
+        <Card className="bg-gray-800 border-gray-700 p-6 xl:col-span-1">
           <h2 className="text-2xl font-bold mb-6 text-cyan-400">Game Status</h2>
           
           {/* Current Status */}
@@ -414,7 +603,7 @@ const Index = () => {
       </div>
 
       {/* Keyboard Shortcuts Info */}
-      <div className="max-w-6xl mx-auto mt-8">
+      <div className="max-w-7xl mx-auto mt-8">
         <Card className="bg-gray-800 border-gray-700 p-4">
           <h3 className="text-lg font-bold mb-3 text-yellow-400">Keyboard Shortcuts:</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
